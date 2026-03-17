@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Copiloto Ruta Escolar</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ruta Escolar" />
+  <meta name="description" content="Sistema móvil de ruta escolar con bandeja, GPS, WhatsApp y copiloto IA local." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <style>
+    :root{
+      --bg:#08111f;
+      --panel:#0f172a;
+      --panel-2:#111c34;
+      --line:#233252;
+      --text:#e5eefc;
+      --muted:#9fb1d1;
+      --ok:#10b981;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --accent:#38bdf8;
+      --accent-2:#2563eb;
+      --chip:#16233f;
+      --shadow:0 12px 30px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#07101c,#0b1324 22%,#0a1220 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    body{min-height:100vh}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer;border:none}
+    a{color:inherit;text-decoration:none}
+    .app{max-width:720px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(90px + env(safe-area-inset-bottom))}
+    .topbar{position:sticky;top:0;z-index:40;padding:12px 0 10px;background:linear-gradient(180deg,rgba(8,17,31,.96),rgba(8,17,31,.82),rgba(8,17,31,0));backdrop-filter:blur(8px)}
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand h1{font-size:1.15rem;margin:0}
+    .brand p{margin:3px 0 0;color:var(--muted);font-size:.9rem}
+    .status-dot{width:10px;height:10px;border-radius:999px;background:var(--warn);box-shadow:0 0 0 6px rgba(245,158,11,.12)}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .stack{display:grid;gap:12px}
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:1fr 1fr}
+    @media (max-width:560px){.grid-2{grid-template-columns:1fr}}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 10px;border-radius:999px;background:var(--chip);color:var(--muted);border:1px solid var(--line);font-size:.85rem}
+    .chip.active{background:rgba(56,189,248,.15);color:#cbefff;border-color:rgba(56,189,248,.35)}
+    .chip.good{color:#d2ffe9;border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    .chip.bad{color:#ffd5d5;border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    .chip.warn{color:#ffe8c0;border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.12)}
+    .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .section-title h2{margin:0;font-size:1rem}
+    .section-title small{color:var(--muted)}
+    .hero{display:grid;gap:12px}
+    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .hero h3{margin:0 0 4px;font-size:1.1rem}
+    .hero p{margin:0;color:var(--muted)}
+    .counter-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .counter{background:#0b152a;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
+    .counter strong{display:block;font-size:1.25rem}
+    .counter span{display:block;color:var(--muted);font-size:.82rem;margin-top:3px}
+    .student-box{background:#0b152a;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:8px}
+    .student-name{font-size:1.18rem;font-weight:800}
+    .muted{color:var(--muted)}
+    .tiny{font-size:.82rem}
+    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .space{justify-content:space-between}
+    .btn{min-height:48px;padding:12px 14px;border-radius:14px;font-weight:700;transition:.15s transform ease,.15s opacity ease,.15s background ease;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:white}
+    .btn-secondary{background:#13213b;color:var(--text);border:1px solid var(--line)}
+    .btn-success{background:rgba(16,185,129,.16);color:#d2ffe9;border:1px solid rgba(16,185,129,.4)}
+    .btn-danger{background:rgba(239,68,68,.14);color:#ffd7d7;border:1px solid rgba(239,68,68,.35)}
+    .btn-warning{background:rgba(245,158,11,.16);color:#ffe9c2;border:1px solid rgba(245,158,11,.35)}
+    .btn-block{width:100%}
+    .actions-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+    @media (max-width:560px){.actions-grid{grid-template-columns:1fr}}
+    .list{display:grid;gap:10px}
+    .item{background:#0b152a;border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px}
+    .item strong{font-size:1rem}
+    .item-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+    .pill{padding:6px 8px;border-radius:999px;font-size:.76rem;border:1px solid var(--line);background:#152440;color:var(--muted)}
+    .pill.pending{background:rgba(245,158,11,.14);color:#ffe7be;border-color:rgba(245,158,11,.35)}
+    .pill.opened{background:rgba(56,189,248,.14);color:#cdefff;border-color:rgba(56,189,248,.35)}
+    .pill.sent{background:rgba(16,185,129,.14);color:#d2ffe9;border-color:rgba(16,185,129,.35)}
+    .pill.error{background:rgba(239,68,68,.14);color:#ffd7d7;border-color:rgba(239,68,68,.35)}
+    .nav{position:fixed;left:0;right:0;bottom:0;z-index:50;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(7,16,28,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.06)}
+    .nav-inner{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .nav button{min-height:52px;border-radius:14px;background:#11203a;color:var(--muted);border:1px solid var(--line);font-weight:700}
+    .nav button.active{background:rgba(56,189,248,.14);color:#d7f3ff;border-color:rgba(56,189,248,.34)}
+    .screen{display:none}
+    .screen.active{display:grid;gap:12px}
+    .field{display:grid;gap:6px}
+    .field label{font-size:.9rem;color:#cad8f1}
+    .field input,.field select,.field textarea{width:100%;background:#091120;color:var(--text);border:1px solid var(--line);border-radius:14px;padding:12px}
+    .field textarea{min-height:96px;resize:vertical}
+    .assistant-box{background:linear-gradient(180deg,rgba(56,189,248,.12),rgba(37,99,235,.09));border:1px solid rgba(56,189,248,.3);border-radius:18px;padding:14px;display:grid;gap:10px}
+    .assistant-answer{white-space:pre-wrap;line-height:1.45}
+    .empty{padding:18px;border:1px dashed var(--line);border-radius:16px;color:var(--muted);text-align:center}
+    .danger-text{color:#ffb9b9}
+    .success-text{color:#baf5d4}
+    .warn-text{color:#ffe4a8}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <div>
+          <h1>🚌 Copiloto Ruta Escolar</h1>
+          <p>Sistema operativo móvil con bandeja, GPS, WhatsApp y copiloto IA local</p>
+        </div>
+        <div class="status-dot" id="globalStatusDot"></div>
+      </div>
+    </div>
+
+    <section id="screen-operacion" class="screen active">
+      <div class="card hero">
+        <div class="hero-top">
+          <div>
+            <h3>Operación de ruta</h3>
+            <p>Flujo rápido para conductor. Selecciona ruta y presiona <strong>Siguiente</strong>.</p>
+          </div>
+          <button class="btn btn-secondary" id="btnResetDay">Reiniciar día</button>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Ruta activa</label>
+            <select id="routeSelect"></select>
+          </div>
+          <div class="field">
+            <label>Modo de barrio</label>
+            <select id="neighborhoodModeSelect">
+              <option value="gps">GPS automático</option>
+              <option value="student">Barrio del estudiante</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="chips" id="statusChips"></div>
+
+        <div class="counter-row">
+          <div class="counter"><strong id="counterPending">0</strong><span>Pendientes</span></div>
+          <div class="counter"><strong id="counterNotified">0</strong><span>Avisados</span></div>
+          <div class="counter"><strong id="counterTray">0</strong><span>En bandeja</span></div>
+        </div>
+
+        <div class="grid grid-2">
+          <button class="btn btn-secondary btn-block" id="btnExportData">Exportar backup</button>
+          <label class="btn btn-secondary btn-block" style="display:flex">
+            Importar backup
+            <input type="file" id="importFileInput" accept="application/json" style="display:none" />
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>Estudiante actual</h2>
+          <small id="currentIndexInfo">0 / 0</small>
+        </div>
+        <div id="studentCurrentBox" class="student-box"></div>
+        <div class="actions-grid" style="margin-top:12px">
+          <button class="btn btn-primary btn-block" id="btnNext">Siguiente</button>
+          <button class="btn btn-secondary btn-block" id="btnRefreshGps">Actualizar GPS</button>
+        </div>
+        <div class="grid grid-2" style="margin-top:10px">
+          <button class="btn btn-success btn-block" id="btnOpenWhatsapp">Abrir WhatsApp</button>
+          <button class="btn btn-warning btn-block" id="btnMarkNotified">Marcar avisado</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>Mensaje preparado</h2>
+          <small>Listo para enviar</small>
+        </div>
+        <div class="field">
+          <label>Texto</label>
+          <textarea id="messagePreview"></textarea>
+        </div>
+        <div class="grid grid-2">
+          <button class="btn btn-secondary btn-block" id="btnCopyMessage">Copiar mensaje</button>
+          <button class="btn btn-secondary btn-block" id="btnAddTray">Guardar en bandeja</button>
+        </div>
+      </div>
+
+      <div class="card assistant-box">
+        <div class="section-title" style="margin-bottom:0">
+          <h2>🧠 Copiloto IA local</h2>
+          <small>Diagnóstico + asistencia operativa</small>
+        </div>
+        <div class="assistant-answer" id="assistantSummary"></div>
+        <div class="grid grid-2">
+          <button class="btn btn-secondary btn-block" id="btnAssistantRefresh">Analizar sistema</button>
+          <button class="btn btn-secondary btn-block" id="btnAssistantRoutePlan">Sugerir siguiente acción</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-bandeja" class="screen">
+      <div class="card">
+        <div class="section-title">
+          <h2>Bandeja operativa</h2>
+          <small id="trayCountLabel">0 mensajes</small>
+        </div>
+        <div class="chips">
+          <button class="chip active" data-tray-filter="all">Todos</button>
+          <button class="chip" data-tray-filter="pending">Pendientes</button>
+          <button class="chip" data-tray-filter="opened">Abiertos</button>
+          <button class="chip" data-tray-filter="sent">Enviados</button>
+        </div>
+      </div>
+      <div id="trayList" class="list"></div>
+    </section>
+
+    <section id="screen-diagnostico" class="screen">
+      <div class="card">
+        <div class="section-title">
+          <h2>Diagnóstico del sistema</h2>
+          <small>Datos, GPS y calidad operativa</small>
+        </div>
+        <div id="diagnosticChips" class="chips"></div>
+      </div>
+      <div id="diagnosticList" class="list"></div>
+    </section>
+
+    <section id="screen-admin" class="screen">
+      <div class="card stack">
+        <div class="section-title">
+          <h2>Administración local</h2>
+          <small>Todo queda guardado en este dispositivo</small>
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Nombre estudiante</label>
+            <input id="inputStudentName" placeholder="Ej: Juan Pablo" />
+          </div>
+          <div class="field">
+            <label>Ruta</label>
+            <select id="inputStudentRoute"></select>
+          </div>
+          <div class="field">
+            <label>Acudiente / referencia</label>
+            <input id="inputStudentGuardian" placeholder="Ej: Turbay Ayala" />
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <input id="inputStudentPhone" placeholder="3001234567" />
+          </div>
+          <div class="field">
+            <label>Barrio</label>
+            <select id="inputStudentNeighborhood"></select>
+          </div>
+          <div class="field">
+            <label>Notas</label>
+            <input id="inputStudentNotes" placeholder="Ej: sin teléfono, recoger con abuela" />
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnAddStudent">Agregar estudiante</button>
+      </div>
+
+      <div class="card stack">
+        <div class="section-title">
+          <h2>Agregar barrio</h2>
+          <small>Para detección por GPS</small>
+        </div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Nombre del barrio</label>
+            <input id="inputNeighborhoodName" placeholder="Ej: Turbay Ayala" />
+          </div>
+          <div class="field">
+            <label>Latitud</label>
+            <input id="inputNeighborhoodLat" placeholder="10.3912" />
+          </div>
+          <div class="field">
+            <label>Longitud</label>
+            <input id="inputNeighborhoodLng" placeholder="-75.4791" />
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnAddNeighborhood">Agregar barrio</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>Base de estudiantes</h2>
+          <small id="studentCountLabel">0 registros</small>
+        </div>
+        <div id="studentAdminList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="screen-ia" class="screen">
+      <div class="card assistant-box">
+        <div class="section-title" style="margin-bottom:0">
+          <h2>Interacción completa con IA local</h2>
+          <small>Sin backend, enfocada a conductor</small>
+        </div>
+        <div class="field">
+          <label>Pregunta operativa</label>
+          <textarea id="assistantInput" placeholder="Ej: ¿qué problemas tiene la ruta actual? o ¿a quién sigo después?"></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnAskAssistant">Consultar copiloto</button>
+        <div class="assistant-answer" id="assistantOutput">Escribe una pregunta y el copiloto analizará estudiantes, ruta, bandeja, GPS y alertas.</div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <button class="active" data-screen="operacion">Operar</button>
+      <button data-screen="bandeja">Bandeja</button>
+      <button data-screen="diagnostico">Estado</button>
+      <button data-screen="admin">Admin</button>
+      <button data-screen="ia">IA</button>
+    </div>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = 'copiloto-ruta-escolar-v1';
+
+    const defaultData = {
+      routes: ['Bachillerato 1','Bachillerato 2','Primaria','Transición'],
+      routeOrder: {
+        'Bachillerato 1': [],
+        'Bachillerato 2': [],
+        'Primaria': [],
+        'Transición': []
+      },
+      neighborhoods: [
+        { id: 'n1', name: 'Turbay Ayala', lat: 10.3912, lng: -75.4791 },
+        { id: 'n2', name: 'Villa Jerusalén', lat: 10.3944, lng: -75.4744 },
+        { id: 'n3', name: 'Cancha', lat: 10.3897, lng: -75.4824 },
+        { id: 'n4', name: 'Carrera 16 #13-33', lat: 10.3888, lng: -75.4801 }
+      ],
+      students: [
+        { id:'s1', route:'Bachillerato 1', name:'Juan Pablo', guardian:'Turbay Ayala', neighborhood:'Turbay Ayala', phone:'3001234567', notes:'', notified:false, notifiedAt:null },
+        { id:'s2', route:'Bachillerato 1', name:'Nicolás Bedoya', guardian:'Turbay Ayala', neighborhood:'Turbay Ayala', phone:'3004567890', notes:'', notified:false, notifiedAt:null },
+        { id:'s3', route:'Bachillerato 1', name:'Dilan Gañán 6B', guardian:'Abuela Teresa', neighborhood:'Turbay Ayala', phone:'3015557788', notes:'Referencia: Turbay Ayala', notified:false, notifiedAt:null },
+        { id:'s4', route:'Bachillerato 1', name:'Dilan Gañán 6B', guardian:'Mamá', neighborhood:'Villa Jerusalén', phone:'3014441122', notes:'Referencia: Villa Jerusalén', notified:false, notifiedAt:null },
+        { id:'s5', route:'Bachillerato 1', name:'Frederick Anaya', guardian:'Cancha', neighborhood:'Carrera 16 #13-33', phone:'3022223333', notes:'', notified:false, notifiedAt:null },
+        { id:'s6', route:'Bachillerato 1', name:'Dominik 8B', guardian:'Mamá', neighborhood:'Cancha', phone:'3033332211', notes:'', notified:false, notifiedAt:null },
+        { id:'s7', route:'Bachillerato 1', name:'Dominik 8B', guardian:'Estudiante', neighborhood:'Cancha', phone:'3049991122', notes:'', notified:false, notifiedAt:null },
+        { id:'s8', route:'Bachillerato 1', name:'Heydi', guardian:'Cancha', neighborhood:'Cancha', phone:'', notes:'SIN TELÉFONO', notified:false, notifiedAt:null }
+      ],
+      tray: [],
+      app: {
+        activeRoute: 'Bachillerato 1',
+        currentStudentId: null,
+        currentTrayId: null,
+        lastMessage: '',
+        currentNeighborhood: null,
+        gpsStatus: 'idle',
+        gpsPosition: null,
+        neighborhoodMode: 'gps',
+        trayFilter: 'all'
+      }
+    };
+
+    const state = loadState();
+    bootstrapRouteOrder();
+
+    function loadState(){
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return structuredClone(defaultData);
+        const parsed = JSON.parse(raw);
+        return deepMerge(structuredClone(defaultData), parsed);
+      } catch {
+        return structuredClone(defaultData);
+      }
+    }
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function structuredClone(obj){
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function deepMerge(base, incoming){
+      if(Array.isArray(base) || Array.isArray(incoming)) return incoming ?? base;
+      const out = { ...base };
+      for(const key in incoming){
+        if(incoming[key] && typeof incoming[key] === 'object' && !Array.isArray(incoming[key]) && base[key]){
+          out[key] = deepMerge(base[key], incoming[key]);
+        } else {
+          out[key] = incoming[key];
+        }
+      }
+      return out;
+    }
+
+    function bootstrapRouteOrder(){
+      state.routes.forEach(route => {
+        if(!state.routeOrder[route]) state.routeOrder[route] = [];
+      });
+      state.students.forEach(st => {
+        if(!state.routeOrder[st.route]) state.routeOrder[st.route] = [];
+        if(!state.routeOrder[st.route].includes(st.id)) state.routeOrder[st.route].push(st.id);
+      });
+      saveState();
+    }
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => [...document.querySelectorAll(sel)];
+
+    function setup(){
+      fillSelects();
+      bindEvents();
+      renderAll();
+      refreshGPS(false);
+      registerServiceWorker();
+    }
+
+    function fillSelects(){
+      const routeOptions = state.routes.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+      $('#routeSelect').innerHTML = routeOptions;
+      $('#inputStudentRoute').innerHTML = routeOptions;
+      $('#routeSelect').value = state.app.activeRoute;
+      $('#inputStudentRoute').value = state.app.activeRoute;
+      fillNeighborhoodSelect();
+      $('#neighborhoodModeSelect').value = state.app.neighborhoodMode;
+    }
+
+    function fillNeighborhoodSelect(){
+      const opts = state.neighborhoods.map(n => `<option value="${escapeHtml(n.name)}">${escapeHtml(n.name)}</option>`).join('');
+      $('#inputStudentNeighborhood').innerHTML = opts;
+    }
+
+    function bindEvents(){
+      $('#routeSelect').addEventListener('change', e => {
+        state.app.activeRoute = e.target.value;
+        state.app.currentStudentId = null;
+        state.app.currentTrayId = null;
+        saveState();
+        renderAll();
+      });
+
+      $('#neighborhoodModeSelect').addEventListener('change', e => {
+        state.app.neighborhoodMode = e.target.value;
+        saveState();
+        renderAll();
+      });
+
+      $('#btnNext').addEventListener('click', handleNext);
+      $('#btnRefreshGps').addEventListener('click', () => refreshGPS(true));
+      $('#btnOpenWhatsapp').addEventListener('click', openCurrentWhatsApp);
+      $('#btnMarkNotified').addEventListener('click', markCurrentNotified);
+      $('#btnCopyMessage').addEventListener('click', copyCurrentMessage);
+      $('#btnAddTray').addEventListener('click', addCurrentToTray);
+      $('#btnAssistantRefresh').addEventListener('click', renderAssistantSummary);
+      $('#btnAssistantRoutePlan').addEventListener('click', () => {
+        $('#assistantOutput').textContent = buildAssistantAnswer('siguiente accion');
+        activateScreen('ia');
+      });
+      $('#btnAskAssistant').addEventListener('click', () => {
+        const question = $('#assistantInput').value.trim();
+        $('#assistantOutput').textContent = buildAssistantAnswer(question);
+      });
+      $('#btnResetDay').addEventListener('click', resetDay);
+
+      $('#btnAddStudent').addEventListener('click', addStudent);
+      $('#btnAddNeighborhood').addEventListener('click', addNeighborhood);
+      $('#btnExportData').addEventListener('click', exportData);
+      $('#importFileInput').addEventListener('change', e => importDataFromFile(e.target.files[0]));
+
+      $$('.nav button').forEach(btn => btn.addEventListener('click', () => activateScreen(btn.dataset.screen)));
+      $$('[data-tray-filter]').forEach(btn => btn.addEventListener('click', () => {
+        state.app.trayFilter = btn.dataset.trayFilter;
+        saveState();
+        renderTray();
+      }));
+    }
+
+    function activateScreen(name){
+      $$('.screen').forEach(el => el.classList.remove('active'));
+      $(`#screen-${name}`).classList.add('active');
+      $$('.nav button').forEach(el => el.classList.toggle('active', el.dataset.screen === name));
+    }
+
+    function getRouteStudents(route){
+      const orderedIds = state.routeOrder[route] || [];
+      return orderedIds.map(id => state.students.find(s => s.id === id)).filter(Boolean);
+    }
+
+    function getPendingStudents(route){
+      return getRouteStudents(route).filter(s => !s.notified);
+    }
+
+    function getCurrentStudent(){
+      return state.students.find(s => s.id === state.app.currentStudentId) || null;
+    }
+
+    function getCurrentTrayItem(){
+      return state.tray.find(t => t.id === state.app.currentTrayId) || null;
+    }
+
+    async function handleNext(){
+      const nextStudent = getPendingStudents(state.app.activeRoute)[0] || null;
+      if(!nextStudent){
+        toast('Ruta completada. No hay pendientes.');
+        state.app.currentStudentId = null;
+        state.app.currentTrayId = null;
+        state.app.lastMessage = 'Ruta completa. Todos los estudiantes están avisados.';
+        saveState();
+        renderAll();
+        return;
+      }
+
+      state.app.currentStudentId = nextStudent.id;
+      await resolveNeighborhoodForCurrent();
+      state.app.lastMessage = buildMessage(nextStudent, state.app.currentNeighborhood || nextStudent.neighborhood);
+      const trayItem = createTrayItem(nextStudent, state.app.lastMessage, state.app.currentNeighborhood || nextStudent.neighborhood);
+      state.tray.unshift(trayItem);
+      state.app.currentTrayId = trayItem.id;
+      saveState();
+      renderAll();
+      toast(`Mensaje listo para ${nextStudent.name}`);
+    }
+
+    function createTrayItem(student, message, neighborhood){
+      const cleanPhone = sanitizePhone(student.phone);
+      const link = cleanPhone ? `https://wa.me/57${cleanPhone}?text=${encodeURIComponent(message)}` : '';
+      return {
+        id: uid('tray'),
+        studentId: student.id,
+        route: student.route,
+        studentName: student.name,
+        guardian: student.guardian,
+        neighborhood,
+        phone: student.phone,
+        message,
+        link,
+        status: cleanPhone ? 'pending' : 'error',
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    async function resolveNeighborhoodForCurrent(){
+      const student = getCurrentStudent();
+      if(!student) return null;
+      if(state.app.neighborhoodMode === 'student'){
+        state.app.currentNeighborhood = student.neighborhood || 'Sin barrio';
+        saveState();
+        return state.app.currentNeighborhood;
+      }
+
+      const gpsOk = await refreshGPS(false);
+      if(gpsOk && state.app.gpsPosition){
+        const n = getNearestNeighborhood(state.app.gpsPosition.lat, state.app.gpsPosition.lng);
+        state.app.currentNeighborhood = n ? n.name : (student.neighborhood || 'Sin barrio');
+      } else {
+        state.app.currentNeighborhood = student.neighborhood || 'Sin barrio';
+      }
+      saveState();
+      return state.app.currentNeighborhood;
+    }
+
+    function buildMessage(student, neighborhood){
+      return `Buenos días. Vamos llegando al sector ${neighborhood}. Por favor estar atentos para recoger a ${student.name}.`;
+    }
+
+    function sanitizePhone(phone){
+      return String(phone || '').replace(/\D/g, '').slice(-10);
+    }
+
+    function openCurrentWhatsApp(){
+      const tray = getCurrentTrayItem();
+      if(!tray){ toast('Primero genera un mensaje con Siguiente.'); return; }
+      if(!tray.link){ toast('Este estudiante no tiene teléfono válido.'); return; }
+      tray.status = 'opened';
+      saveState();
+      renderTray();
+      window.open(tray.link, '_blank');
+    }
+
+    function markCurrentNotified(){
+      const student = getCurrentStudent();
+      if(!student){ toast('No hay estudiante actual.'); return; }
+      student.notified = true;
+      student.notifiedAt = new Date().toISOString();
+      const tray = getCurrentTrayItem();
+      if(tray) tray.status = 'sent';
+      saveState();
+      renderAll();
+      toast(`${student.name} marcado como avisado`);
+    }
+
+    async function copyCurrentMessage(){
+      const text = $('#messagePreview').value.trim();
+      if(!text){ toast('No hay mensaje para copiar.'); return; }
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('Mensaje copiado');
+      } catch {
+        toast('No se pudo copiar en este dispositivo');
+      }
+    }
+
+    function addCurrentToTray(){
+      const student = getCurrentStudent();
+      if(!student){ toast('No hay estudiante actual.'); return; }
+      const message = $('#messagePreview').value.trim();
+      if(!message){ toast('No hay mensaje para guardar.'); return; }
+      const item = createTrayItem(student, message, state.app.currentNeighborhood || student.neighborhood);
+      state.tray.unshift(item);
+      state.app.currentTrayId = item.id;
+      saveState();
+      renderAll();
+      toast('Mensaje guardado en bandeja');
+    }
+
+    function exportData(){
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ruta-escolar-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Backup exportado');
+    }
+
+    function importDataFromFile(file){
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(String(e.target.result || '{}'));
+          const merged = deepMerge(structuredClone(defaultData), parsed);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          location.reload();
+        } catch {
+          toast('Archivo inválido');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function moveStudent(studentId, direction){
+      const student = state.students.find(s => s.id === studentId);
+      if(!student) return;
+      const arr = state.routeOrder[student.route] || [];
+      const index = arr.indexOf(studentId);
+      if(index < 0) return;
+      const nextIndex = direction === 'up' ? index - 1 : index + 1;
+      if(nextIndex < 0 || nextIndex >= arr.length) return;
+      [arr[index], arr[nextIndex]] = [arr[nextIndex], arr[index]];
+      saveState();
+      renderAll();
+    }
+
+    async function registerServiceWorker(){
+      if(!('serviceWorker' in navigator)) return;
+      try {
+        await navigator.serviceWorker.register('./service-worker.js');
+      } catch {}
+    }
+
+    function resetDay(){
+      state.students.forEach(s => { s.notified = false; s.notifiedAt = null; });
+      state.tray = [];
+      state.app.currentStudentId = null;
+      state.app.currentTrayId = null;
+      state.app.lastMessage = '';
+      saveState();
+      renderAll();
+      toast('Día reiniciado');
+    }
+
+    function addStudent(){
+      const name = $('#inputStudentName').value.trim();
+      const route = $('#inputStudentRoute').value;
+      const guardian = $('#inputStudentGuardian').value.trim();
+      const phone = $('#inputStudentPhone').value.trim();
+      const neighborhood = $('#inputStudentNeighborhood').value;
+      const notes = $('#inputStudentNotes').value.trim();
+
+      if(!name){ toast('Escribe el nombre del estudiante'); return; }
+
+      const student = { id: uid('stu'), route, name, guardian, phone, neighborhood, notes, notified:false, notifiedAt:null };
+      state.students.push(student);
+      if(!state.routeOrder[route]) state.routeOrder[route] = [];
+      state.routeOrder[route].push(student.id);
+      saveState();
+      clearAdminInputs();
+      renderAll();
+      toast('Estudiante agregado');
+    }
+
+    function addNeighborhood(){
+      const name = $('#inputNeighborhoodName').value.trim();
+      const lat = Number($('#inputNeighborhoodLat').value.trim());
+      const lng = Number($('#inputNeighborhoodLng').value.trim());
+
+      if(!name || Number.isNaN(lat) || Number.isNaN(lng)){
+        toast('Completa nombre, latitud y longitud');
+        return;
+      }
+
+      state.neighborhoods.push({ id: uid('nei'), name, lat, lng });
+      saveState();
+      fillNeighborhoodSelect();
+      $('#inputNeighborhoodName').value = '';
+      $('#inputNeighborhoodLat').value = '';
+      $('#inputNeighborhoodLng').value = '';
+      renderAll();
+      toast('Barrio agregado');
+    }
+
+    function clearAdminInputs(){
+      ['#inputStudentName','#inputStudentGuardian','#inputStudentPhone','#inputStudentNotes'].forEach(sel => $(sel).value = '');
+    }
+
+    function deleteStudent(id){
+      const index = state.students.findIndex(s => s.id === id);
+      if(index < 0) return;
+      const st = state.students[index];
+      state.students.splice(index,1);
+      state.routeOrder[st.route] = (state.routeOrder[st.route] || []).filter(x => x !== id);
+      state.tray = state.tray.filter(t => t.studentId !== id);
+      if(state.app.currentStudentId === id) state.app.currentStudentId = null;
+      saveState();
+      renderAll();
+      toast('Estudiante eliminado');
+    }
+
+    async function refreshGPS(forceToast = true){
+      if(!navigator.geolocation){
+        state.app.gpsStatus = 'unsupported';
+        saveState();
+        renderAll();
+        if(forceToast) toast('GPS no soportado');
+        return false;
+      }
+      state.app.gpsStatus = 'loading';
+      saveState();
+      renderAll();
+
+      return new Promise(resolve => {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            state.app.gpsStatus = 'ok';
+            state.app.gpsPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+            saveState();
+            renderAll();
+            if(forceToast) toast('GPS actualizado');
+            resolve(true);
+          },
+          () => {
+            state.app.gpsStatus = 'error';
+            saveState();
+            renderAll();
+            if(forceToast) toast('No se pudo obtener GPS');
+            resolve(false);
+          },
+          { enableHighAccuracy:true, timeout:8000, maximumAge:15000 }
+        );
+      });
+    }
+
+    function getNearestNeighborhood(lat,lng){
+      let best = null;
+      let bestDist = Infinity;
+      state.neighborhoods.forEach(n => {
+        const d = getDistanceKm(lat,lng,n.lat,n.lng);
+        if(d < bestDist){ bestDist = d; best = { ...n, distanceKm:d }; }
+      });
+      return best;
+    }
+
+    function getDistanceKm(lat1, lng1, lat2, lng2){
+      const toRad = d => d * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLng = toRad(lng2 - lng1);
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+      return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function validateStudent(s){
+      const issues = [];
+      if(!s.name) issues.push('Nombre vacío');
+      if(!s.route) issues.push('Ruta vacía');
+      if(!s.neighborhood) issues.push('Sin barrio');
+      if(!s.phone) issues.push('Sin teléfono');
+      else if(!/^\d{10}$/.test(sanitizePhone(s.phone))) issues.push('Teléfono inválido');
+      return issues;
+    }
+
+    function getDiagnostics(){
+      const routeStudents = getRouteStudents(state.app.activeRoute);
+      const invalidPhones = [];
+      const noPhone = [];
+      const noNeighborhood = [];
+      const duplicates = [];
+      const nameMap = {};
+
+      routeStudents.forEach(s => {
+        const errs = validateStudent(s);
+        if(errs.includes('Sin teléfono')) noPhone.push(s);
+        if(errs.includes('Teléfono inválido')) invalidPhones.push(s);
+        if(errs.includes('Sin barrio')) noNeighborhood.push(s);
+        const key = `${s.name.toLowerCase()}-${s.route}`;
+        if(nameMap[key]) duplicates.push(s);
+        nameMap[key] = true;
+      });
+
+      return {
+        total: routeStudents.length,
+        pending: routeStudents.filter(s => !s.notified).length,
+        notified: routeStudents.filter(s => s.notified).length,
+        gps: state.app.gpsStatus,
+        noPhone,
+        invalidPhones,
+        noNeighborhood,
+        duplicates
+      };
+    }
+
+    function buildAssistantSummary(){
+      const d = getDiagnostics();
+      const nextStudent = getPendingStudents(state.app.activeRoute)[0];
+      const currentGps = state.app.gpsPosition
+        ? `GPS activo. Precisión aprox ${Math.round(state.app.gpsPosition.accuracy || 0)} m.`
+        : 'GPS sin posición válida.';
+
+      const lines = [];
+      lines.push(`Ruta activa: ${state.app.activeRoute}.`);
+      lines.push(`Pendientes: ${d.pending}. Avisados: ${d.notified}. Mensajes en bandeja: ${state.tray.length}.`);
+      lines.push(currentGps);
+
+      if(nextStudent) lines.push(`Siguiente recomendado: ${nextStudent.name} (${nextStudent.guardian || 'sin acudiente'}) en ${nextStudent.neighborhood || 'sin barrio'}.`);
+      else lines.push('No hay estudiantes pendientes en esta ruta.');
+
+      if(d.noPhone.length) lines.push(`Alerta: ${d.noPhone.length} estudiante(s) sin teléfono.`);
+      if(d.invalidPhones.length) lines.push(`Alerta: ${d.invalidPhones.length} teléfono(s) inválido(s).`);
+      if(d.noNeighborhood.length) lines.push(`Alerta: ${d.noNeighborhood.length} estudiante(s) sin barrio.`);
+      if(!d.noPhone.length && !d.invalidPhones.length && !d.noNeighborhood.length) lines.push('Base de datos operativa sin errores críticos en la ruta activa.');
+
+      return lines.join('\n');
+    }
+
+    function buildAssistantAnswer(question){
+      const q = (question || '').toLowerCase();
+      const d = getDiagnostics();
+      const nextStudent = getPendingStudents(state.app.activeRoute)[0];
+      const currentStudent = getCurrentStudent();
+      const trayPending = state.tray.filter(t => t.status === 'pending').length;
+
+      if(!q) return buildAssistantSummary();
+
+      if(q.includes('problema') || q.includes('error') || q.includes('diagnost')){
+        let out = `Diagnóstico de ${state.app.activeRoute}:\n`;
+        out += `- Pendientes: ${d.pending}\n- Avisados: ${d.notified}\n- GPS: ${translateGps(d.gps)}\n`;
+        out += `- Sin teléfono: ${d.noPhone.length}\n- Teléfonos inválidos: ${d.invalidPhones.length}\n- Sin barrio: ${d.noNeighborhood.length}\n`;
+        if(d.noPhone.length) out += `\nEstudiantes sin teléfono: ${d.noPhone.map(s => s.name).join(', ')}.`;
+        return out;
+      }
+
+      if(q.includes('sigo') || q.includes('siguiente') || q.includes('contin') || q.includes('accion')){
+        if(!nextStudent) return 'No hay más estudiantes pendientes. Puedes cerrar la ruta o reiniciar el día.';
+        return `Siguiente acción recomendada:\n1. Presiona Siguiente\n2. Preparar aviso para ${nextStudent.name}\n3. Abrir WhatsApp\n4. Enviar manualmente\n5. Marcar como avisado\n\nBarrio esperado: ${nextStudent.neighborhood || 'sin barrio'}.${!nextStudent.phone ? '\nAtención: este registro no tiene teléfono.' : ''}`;
+      }
+
+      if(q.includes('gps') || q.includes('ubic')){
+        if(state.app.gpsPosition){
+          const near = getNearestNeighborhood(state.app.gpsPosition.lat, state.app.gpsPosition.lng);
+          return `GPS actual: ${translateGps(state.app.gpsStatus)}.\nLat: ${state.app.gpsPosition.lat.toFixed(5)}\nLng: ${state.app.gpsPosition.lng.toFixed(5)}\nBarrio más cercano: ${near ? near.name : 'No detectado'}.`;
+        }
+        return 'No hay una posición GPS válida. Usa el botón Actualizar GPS o cambia a modo Barrio del estudiante.';
+      }
+
+      if(q.includes('bandeja') || q.includes('mensaje')){
+        return `La bandeja tiene ${state.tray.length} mensajes. Pendientes: ${trayPending}.\n${state.tray[0] ? `Último mensaje: ${state.tray[0].studentName} - estado ${translateTray(state.tray[0].status)}.` : 'Todavía no hay mensajes preparados.'}`;
+      }
+
+      if(q.includes('actual') || q.includes('estudiante')){
+        if(!currentStudent) return 'No hay estudiante actual cargado. Presiona Siguiente para comenzar.';
+        return `Estudiante actual: ${currentStudent.name}.\nAcudiente: ${currentStudent.guardian || 'No definido'}.\nBarrio: ${state.app.currentNeighborhood || currentStudent.neighborhood || 'Sin barrio'}.\nTeléfono: ${currentStudent.phone || 'No registrado'}.\nEstado: ${currentStudent.notified ? 'Avisado' : 'Pendiente'}.`;
+      }
+
+      return buildAssistantSummary() + '\n\nPuedo responder sobre: siguiente acción, errores, GPS, bandeja o estudiante actual.';
+    }
+
+    function translateGps(status){
+      return ({ idle:'sin iniciar', loading:'buscando', ok:'activo', error:'con error', unsupported:'no soportado' }[status] || status);
+    }
+
+    function translateTray(status){
+      return ({ pending:'pendiente', opened:'abierto', sent:'enviado', error:'con error' }[status] || status);
+    }
+
+    function renderAll(){
+      renderOperational();
+      renderTray();
+      renderDiagnostics();
+      renderAdmin();
+      renderAssistantSummary();
+      updateGlobalStatus();
+    }
+
+    function renderOperational(){
+      const routeStudents = getRouteStudents(state.app.activeRoute);
+      const pending = routeStudents.filter(s => !s.notified).length;
+      const notified = routeStudents.filter(s => s.notified).length;
+      $('#counterPending').textContent = pending;
+      $('#counterNotified').textContent = notified;
+      $('#counterTray').textContent = state.tray.length;
+
+      const current = getCurrentStudent();
+      const currentIndex = current ? routeStudents.findIndex(s => s.id === current.id) + 1 : 0;
+      $('#currentIndexInfo').textContent = `${currentIndex} / ${routeStudents.length}`;
+      $('#studentCurrentBox').innerHTML = current ? `
+        <div class="student-name">${escapeHtml(current.name)}</div>
+        <div class="row space"><span class="muted">Acudiente / referencia</span><strong>${escapeHtml(current.guardian || 'No definido')}</strong></div>
+        <div class="row space"><span class="muted">Barrio detectado</span><strong>${escapeHtml(state.app.currentNeighborhood || current.neighborhood || 'Sin barrio')}</strong></div>
+        <div class="row space"><span class="muted">Teléfono</span><strong>${escapeHtml(current.phone || 'No registrado')}</strong></div>
+        <div class="row space"><span class="muted">Estado</span><span class="pill ${current.notified ? 'sent' : 'pending'}">${current.notified ? 'Avisado' : 'Pendiente'}</span></div>
+        ${current.notes ? `<div class="tiny muted">Notas: ${escapeHtml(current.notes)}</div>` : ''}
+      ` : `<div class="empty">Presiona <strong>Siguiente</strong> para cargar el primer estudiante pendiente.</div>`;
+
+      $('#messagePreview').value = state.app.lastMessage || '';
+      renderStatusChips();
+    }
+
+    function renderStatusChips(){
+      const gps = state.app.gpsStatus;
+      const near = state.app.gpsPosition ? getNearestNeighborhood(state.app.gpsPosition.lat, state.app.gpsPosition.lng) : null;
+      const chips = [
+        `<span class="chip ${gps === 'ok' ? 'good' : gps === 'loading' ? 'warn' : 'bad'}">GPS: ${escapeHtml(translateGps(gps))}</span>`,
+        `<span class="chip">Ruta: ${escapeHtml(state.app.activeRoute)}</span>`,
+        `<span class="chip">Modo barrio: ${escapeHtml(state.app.neighborhoodMode)}</span>`,
+        near ? `<span class="chip active">Barrio cercano: ${escapeHtml(near.name)}</span>` : `<span class="chip warn">Barrio cercano: no detectado</span>`
+      ];
+      $('#statusChips').innerHTML = chips.join('');
+    }
+
+    function renderTray(){
+      $('#trayCountLabel').textContent = `${state.tray.length} mensajes`;
+      $$('[data-tray-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.trayFilter === state.app.trayFilter));
+      const items = state.tray.filter(t => state.app.trayFilter === 'all' ? true : t.status === state.app.trayFilter);
+      $('#trayList').innerHTML = items.length ? items.map(item => `
+        <div class="item">
+          <div class="item-head">
+            <div>
+              <strong>${escapeHtml(item.studentName)}</strong>
+              <div class="tiny muted">${escapeHtml(item.route)} · ${escapeHtml(item.guardian || 'Sin acudiente')}</div>
+            </div>
+            <span class="pill ${item.status}">${escapeHtml(translateTray(item.status))}</span>
+          </div>
+          <div class="tiny muted">Barrio: ${escapeHtml(item.neighborhood || 'Sin barrio')} · ${formatDate(item.createdAt)}</div>
+          <div>${escapeHtml(item.message)}</div>
+          <div class="grid grid-2">
+            <button class="btn btn-secondary btn-block" onclick="openTrayWhatsapp('${item.id}')">Abrir WhatsApp</button>
+            <button class="btn btn-success btn-block" onclick="markTraySent('${item.id}')">Marcar enviado</button>
+            <button class="btn btn-secondary btn-block" onclick="copyTrayMessage('${item.id}')">Copiar</button>
+            <button class="btn btn-danger btn-block" onclick="deleteTray('${item.id}')">Eliminar</button>
+          </div>
+        </div>
+      `).join('') : '<div class="empty">No hay mensajes en la bandeja con ese filtro.</div>';
+    }
+
+    function renderDiagnostics(){
+      const d = getDiagnostics();
+      $('#diagnosticChips').innerHTML = `
+        <span class="chip">Total ruta: ${d.total}</span>
+        <span class="chip warn">Pendientes: ${d.pending}</span>
+        <span class="chip good">Avisados: ${d.notified}</span>
+        <span class="chip ${d.gps === 'ok' ? 'good' : 'bad'}">GPS: ${escapeHtml(translateGps(d.gps))}</span>
+        <span class="chip ${d.noPhone.length ? 'bad' : 'good'}">Sin teléfono: ${d.noPhone.length}</span>
+        <span class="chip ${d.invalidPhones.length ? 'bad' : 'good'}">Inválidos: ${d.invalidPhones.length}</span>
+      `;
+
+      const cards = [];
+      cards.push(makeDiagCard('Salud de datos', [
+        `Estudiantes sin teléfono: ${d.noPhone.length}`,
+        `Teléfonos inválidos: ${d.invalidPhones.length}`,
+        `Estudiantes sin barrio: ${d.noNeighborhood.length}`,
+        `Duplicados posibles: ${d.duplicates.length}`
+      ]));
+
+      if(d.noPhone.length) cards.push(makeDiagCard('Sin teléfono', d.noPhone.map(s => `${s.name} · ${s.guardian || 'sin acudiente'}`), 'bad'));
+      if(d.invalidPhones.length) cards.push(makeDiagCard('Teléfonos inválidos', d.invalidPhones.map(s => `${s.name} · ${s.phone}`), 'bad'));
+      if(d.noNeighborhood.length) cards.push(makeDiagCard('Sin barrio', d.noNeighborhood.map(s => s.name), 'warn'));
+      if(!d.noPhone.length && !d.invalidPhones.length && !d.noNeighborhood.length) cards.push(makeDiagCard('Estado general', ['No hay errores críticos en la ruta activa.'], 'good'));
+
+      $('#diagnosticList').innerHTML = cards.join('');
+    }
+
+    function makeDiagCard(title, items, tone=''){
+      const toneClass = tone === 'bad' ? 'danger-text' : tone === 'warn' ? 'warn-text' : tone === 'good' ? 'success-text' : '';
+      return `
+        <div class="item">
+          <strong>${escapeHtml(title)}</strong>
+          <div class="${toneClass}">${items.map(i => `• ${escapeHtml(i)}`).join('<br>')}</div>
+        </div>
+      `;
+    }
+
+    function renderAdmin(){
+      $('#studentCountLabel').textContent = `${state.students.length} registros`;
+      $('#studentAdminList').innerHTML = state.students.length ? state.students.map(s => `
+        <div class="item">
+          <div class="item-head">
+            <div>
+              <strong>${escapeHtml(s.name)}</strong>
+              <div class="tiny muted">${escapeHtml(s.route)} · ${escapeHtml(s.guardian || 'Sin acudiente')}</div>
+            </div>
+            <span class="pill ${s.notified ? 'sent' : 'pending'}">${s.notified ? 'Avisado' : 'Pendiente'}</span>
+          </div>
+          <div class="tiny muted">Barrio: ${escapeHtml(s.neighborhood || 'Sin barrio')} · Tel: ${escapeHtml(s.phone || 'No registrado')}</div>
+          ${s.notes ? `<div class="tiny muted">Notas: ${escapeHtml(s.notes)}</div>` : ''}
+          <div class="grid grid-2">
+            <button class="btn btn-warning btn-block" onclick="toggleNotified('${s.id}')">${s.notified ? 'Quitar avisado' : 'Marcar avisado'}</button>
+            <button class="btn btn-danger btn-block" onclick="deleteStudent('${s.id}')">Eliminar</button>
+            <button class="btn btn-secondary btn-block" onclick="moveStudent('${s.id}','up')">Subir</button>
+            <button class="btn btn-secondary btn-block" onclick="moveStudent('${s.id}','down')">Bajar</button>
+          </div>
+        </div>
+      `).join('') : '<div class="empty">No hay estudiantes cargados.</div>';
+    }
+
+    function renderAssistantSummary(){
+      $('#assistantSummary').textContent = buildAssistantSummary();
+    }
+
+    function updateGlobalStatus(){
+      const d = getDiagnostics();
+      const dot = $('#globalStatusDot');
+      dot.style.background = d.noPhone.length || d.invalidPhones.length || state.app.gpsStatus === 'error' ? 'var(--bad)' : d.pending ? 'var(--warn)' : 'var(--ok)';
+      dot.style.boxShadow = d.noPhone.length || d.invalidPhones.length || state.app.gpsStatus === 'error'
+        ? '0 0 0 6px rgba(239,68,68,.12)'
+        : d.pending
+        ? '0 0 0 6px rgba(245,158,11,.12)'
+        : '0 0 0 6px rgba(16,185,129,.12)';
+    }
+
+    function toast(msg){
+      const el = document.createElement('div');
+      el.textContent = msg;
+      Object.assign(el.style, {
+        position:'fixed', left:'50%', bottom:'90px', transform:'translateX(-50%)',
+        background:'rgba(15,23,42,.96)', color:'#fff', border:'1px solid rgba(255,255,255,.08)',
+        padding:'12px 14px', borderRadius:'14px', zIndex:9999, boxShadow:'0 8px 24px rgba(0,0,0,.3)', maxWidth:'92vw'
+      });
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2200);
+    }
+
+    function uid(prefix='id'){
+      return `${prefix}-${Math.random().toString(36).slice(2,9)}-${Date.now().toString(36)}`;
+    }
+
+    function formatDate(iso){
+      try {
+        return new Date(iso).toLocaleString('es-CO', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
+      } catch { return iso; }
+    }
+
+    function escapeHtml(value){
+      return String(value ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#39;');
+    }
+
+    window.openTrayWhatsapp = function(id){
+      const item = state.tray.find(t => t.id === id);
+      if(!item){ toast('Mensaje no encontrado'); return; }
+      if(!item.link){ toast('No hay teléfono válido para este mensaje'); return; }
+      item.status = 'opened';
+      state.app.currentTrayId = item.id;
+      saveState();
+      renderTray();
+      window.open(item.link, '_blank');
+    };
+
+    window.markTraySent = function(id){
+      const item = state.tray.find(t => t.id === id);
+      if(!item) return;
+      item.status = 'sent';
+      const student = state.students.find(s => s.id === item.studentId);
+      if(student){ student.notified = true; student.notifiedAt = new Date().toISOString(); }
+      saveState();
+      renderAll();
+      toast('Mensaje marcado como enviado');
+    };
+
+    window.copyTrayMessage = async function(id){
+      const item = state.tray.find(t => t.id === id);
+      if(!item) return;
+      try { await navigator.clipboard.writeText(item.message); toast('Mensaje copiado'); }
+      catch { toast('No se pudo copiar'); }
+    };
+
+    window.deleteTray = function(id){
+      state.tray = state.tray.filter(t => t.id !== id);
+      if(state.app.currentTrayId === id) state.app.currentTrayId = null;
+      saveState();
+      renderAll();
+      toast('Mensaje eliminado');
+    };
+
+    window.moveStudent = moveStudent;
+
+    window.toggleNotified = function(id){
+      const s = state.students.find(x => x.id === id);
+      if(!s) return;
+      s.notified = !s.notified;
+      s.notifiedAt = s.notified ? new Date().toISOString() : null;
+      saveState();
+      renderAll();
+    };
+
+    setup();
+  </script>
+</body>
+</html>
